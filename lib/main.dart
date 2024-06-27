@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'home_screen.dart'; // Import the HomeScreen class
+
 void main() {
   runApp(const MyApp());
 }
@@ -13,11 +15,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Build with Gimini',
       theme: ThemeData(
-        
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      
+      home: const HomeScreen(), // Set the HomeScreen as the initial screen
     );
   }
 }

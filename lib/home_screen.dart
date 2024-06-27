@@ -1,42 +1,38 @@
-import "package:flutter/material.dart";
-// import "package:flutter/rendering.dart";
-import "package:giminichatapp/message_widget.dart";
-import "package:google_generative_ai/google_generative_ai.dart";
-// import "package:flutter_markdown/flutter_markdown.dart";
+import 'package:flutter/material.dart';
+import 'package:giminichatapp/message_widget.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
-class HomeScreen extends StatefulWidget{
-  const HomeScreen ({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState(); 
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>{
+class _HomeScreenState extends State<HomeScreen> {
   late final GenerativeModel _model;
   late final ChatSession _chatSession;
-  final FocusNode _textFileldFocus = FocusNode();
+  final FocusNode _textFieldFocus = FocusNode();
   final TextEditingController _textController = TextEditingController();
-  final ScrollController _scrollController= ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
-  //adding handler forthe loading 
   bool _loading = false;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _model = GenerativeModel(
-      model: 'gimini-pro', apiKey: const String.fromEnvironment('api_key'),
+      model: 'gimini-pro',
+      apiKey: const String.fromEnvironment('api_key'),
     );
     _chatSession = _model.startChat();
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Build ith Gimini'),
+        title: const Text('Build with Gimini'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -50,26 +46,22 @@ class _HomeScreenState extends State<HomeScreen>{
                 itemCount: _chatSession.history.length,
                 itemBuilder: (context, index) {
                   final Content content = _chatSession.history.toList()[index];
-                  final text = 
-                      content.parts.whereType<TextPart>().map<String>((e) => e.text ).join('');
+                  final text = content.parts.whereType<TextPart>().map<String>((e) => e.text).join('');
                   return MessageWidget(
-                    text: text, 
+                    text: text,
                     isFromUser: content.role == 'user',
                   );
-              },),
-            ),
-
-            Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: 25,
-                horizontal: 15,
+                },
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       autofocus: true,
-                      focusNode: _textFileldFocus,
+                      focusNode: _textFieldFocus,
                       decoration: textFieldDecoration(),
                       controller: _textController,
                       onSubmitted: _sendChatMessage,
@@ -85,87 +77,72 @@ class _HomeScreenState extends State<HomeScreen>{
     );
   }
 
-  // Decoration input feelds and buttons
-  InputDecoration textFieldDecoration(){
+  InputDecoration textFieldDecoration() {
     return InputDecoration(
       contentPadding: const EdgeInsets.all(15),
       hintText: 'Enter Your Mind ... ',
       border: OutlineInputBorder(
-        borderRadius: const BorderRadius.all(
-          Radius.circular(14),
-        ), 
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
           color: Theme.of(context).colorScheme.secondary,
         ),
       ),
-      focusedBorder:  OutlineInputBorder(
-        borderRadius: const BorderRadius.all(
-          Radius.circular(14),
-        ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
-          color:Theme.of(context).colorScheme.secondary, 
+          color: Theme.of(context).colorScheme.secondary,
         ),
       ),
     );
   }
 
-  // Decorations of text fealds 
   Future<void> _sendChatMessage(String message) async {
     setState(() {
       _loading = true;
     });
 
-    try{
-      final response = await _chatSession.sendMessage( 
-        Content.text(message),
-      );
+    try {
+      final response = await _chatSession.sendMessage(Content.text(message));
       final text = response.text;
       if (text == null) {
-        _showError('No responce from API.');
+        _showError('No response from API.');
         return;
-      } else{
+      } else {
         setState(() {
           _loading = false;
           _scrollDown();
         });
       }
-    }catch(e){
+    } catch (e) {
       _showError(e.toString());
       setState(() {
         _loading = false;
       });
-    }finally{
+    } finally {
       _textController.clear();
       setState(() {
         _loading = false;
       });
-      _textFileldFocus.requestFocus();
+      _textFieldFocus.requestFocus();
     }
   }
 
-
-
- // Scroll Screen to the bottom after response 
-
- void _scrollDown() {
-  WidgetsBinding.instance.addPostFrameCallback(
-    (_) => _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(
-        milliseconds: 750,
+  void _scrollDown() {
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 750),
+        curve: Curves.easeOutCirc,
       ),
-      curve: Curves.easeOutCirc,
-    ),
-  );
- }
+    );
+  }
 
-  // Display error 
   void _showError(String message) {
     showDialog<void>(
-      context: context, 
+      context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('oops something went Wrong'),
+          title: const Text('Oops, something went wrong'),
           content: SingleChildScrollView(
             child: SelectableText(message),
           ),
@@ -173,9 +150,9 @@ class _HomeScreenState extends State<HomeScreen>{
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-              }, 
+              },
               child: const Text('OK'),
-            )
+            ),
           ],
         );
       },
