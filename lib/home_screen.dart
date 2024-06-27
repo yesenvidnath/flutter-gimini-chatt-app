@@ -17,6 +17,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  final List<Content> _chatHistory = []; // Local list to manage chat history
+
   bool _loading = false;
 
   @override
@@ -30,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _model = GenerativeModel(
         model: 'gemini-1.5-pro', // Replace with a valid model ID
         apiKey: Env.apiKey, // Use the loaded API key
-        systemInstruction: Content.system('You are a storyteller. You love to generate short horror stories.'),
+        systemInstruction: Content.system('You are an AI that can chat about anything.'), // More general instruction
       );
       _chatSession = _model.startChat();
     } catch (e) {
@@ -42,47 +44,55 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Build with Gemini'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _chatSession.history.length,
-                itemBuilder: (context, index) {
-                  final Content content = _chatSession.history.toList()[index];
-                  final text = content.parts.whereType<TextPart>().map<String>((e) => e.text).join('');
-                  return MessageWidget(
-                    text: text,
-                    isFromUser: content.role == 'user',
-                  );
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      autofocus: true,
-                      focusNode: _textFieldFocus,
-                      decoration: textFieldDecoration(),
-                      controller: _textController,
-                      onSubmitted: _sendChatMessage,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                ],
-              ),
-            ),
-          ],
+        backgroundColor: Colors.blue,
+        title: const Text(
+          'Build with Gemini',
+          style: TextStyle(
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: _chatHistory.length,
+              itemBuilder: (context, index) {
+                final Content content = _chatHistory[index];
+                final text = content.parts.whereType<TextPart>().map<String>((e) => e.text).join('');
+                return MessageWidget(
+                  text: text,
+                  isFromUser: content.role == 'user',
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    autofocus: true,
+                    focusNode: _textFieldFocus,
+                    decoration: textFieldDecoration(),
+                    controller: _textController,
+                    onSubmitted: _sendChatMessage,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.blue),
+                  onPressed: () {
+                    _sendChatMessage(_textController.text);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -90,25 +100,24 @@ class _HomeScreenState extends State<HomeScreen> {
   InputDecoration textFieldDecoration() {
     return InputDecoration(
       contentPadding: const EdgeInsets.all(15),
-      hintText: 'Enter Your Mind ... ',
+      hintText: 'Enter your message...',
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: Theme.of(context).colorScheme.secondary,
-        ),
+        borderRadius: BorderRadius.circular(25.0),
+        borderSide: const BorderSide(color: Colors.blue),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: Theme.of(context).colorScheme.secondary,
-        ),
+        borderRadius: BorderRadius.circular(25.0),
+        borderSide: const BorderSide(color: Colors.blue),
       ),
     );
   }
 
   Future<void> _sendChatMessage(String message) async {
+    if (message.isEmpty) return;
+
     setState(() {
       _loading = true;
+      _chatHistory.add(Content('user', [TextPart(message)])); // Add user message to chat history
     });
 
     try {
@@ -119,12 +128,13 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       } else {
         setState(() {
+          _chatHistory.add(Content('bot', [TextPart(text)])); // Add bot response to chat history
           _loading = false;
           _scrollDown();
         });
       }
     } catch (e) {
-      _showError(e.toString());
+      _showError('Error: ${e.toString()}');
       setState(() {
         _loading = false;
       });

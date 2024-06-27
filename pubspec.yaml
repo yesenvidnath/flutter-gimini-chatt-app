@@ -36,6 +36,8 @@ dependencies:
   dash_chat: ^1.1.16
   google_generative_ai: ^0.4.3
   flutter_markdown: ^0.7.2+1
+  speech_to_text: ^6.6.2
+  flutter_tts: ^4.0.2
 
 dev_dependencies:
   flutter_test:
