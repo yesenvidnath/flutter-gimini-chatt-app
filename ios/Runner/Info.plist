@@ -2,6 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Adding permission for Text to speech -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need your microphone access to recognize your speech.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We need your speech recognition to understand your commands.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>We need Bluetooth access to improve speech recognition accuracy.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>We need Bluetooth access to improve speech recognition accuracy.</string>
+
+
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

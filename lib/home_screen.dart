@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:giminichatapp/message_widget.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_tts/flutter_tts.dart';
 import 'env.dart'; // Import the env file
 
 class HomeScreen extends StatefulWidget {
@@ -21,10 +23,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _loading = false;
 
+  late stt.SpeechToText _speech; // Speech-to-text instance
+  bool _isListening = false;
+  String _voiceInput = '';
+
+  late FlutterTts flutterTts; // Text-to-speech instance
+
   @override
   void initState() {
     super.initState();
     _initializeModel();
+    _initializeSpeechToText();
+    _initializeTextToSpeech();
   }
 
   void _initializeModel() {
@@ -40,6 +50,60 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _initializeSpeechToText() {
+    _speech = stt.SpeechToText();
+    _speech.initialize(
+      onStatus: (val) => setState(() => _isListening = val == 'listening'),
+      onError: (val) => _showError('Speech recognition error: $val'),
+    ).catchError((e) {
+      _showError('Speech to Text initialization failed: $e');
+    });
+  }
+
+  void _initializeTextToSpeech() {
+    flutterTts = FlutterTts();
+    flutterTts.setErrorHandler((msg) {
+      _showError('Text to Speech error: $msg');
+    });
+  }
+
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => setState(() => _isListening = val == 'listening'),
+        onError: (val) => _showError('Speech recognition error: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _voiceInput = val.recognizedWords;
+            if (val.hasConfidenceRating && val.confidence > 0) {
+              _textController.text = _voiceInput;
+              _sendChatMessage(_voiceInput);
+            }
+          }),
+        );
+      } else {
+        setState(() => _isListening = false);
+        _speech.stop();
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
+
+  Future<void> _speak(String text) async {
+    try {
+      await flutterTts.setLanguage("en-US");
+      await flutterTts.setPitch(1.0);
+      await flutterTts.speak(text);
+    } catch (e) {
+      _showError("Error in TTS: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(
             fontSize: 24.0,
             fontWeight: FontWeight.bold,
+            color: Colors.white, // Set title color to white
           ),
         ),
         centerTitle: true,
@@ -94,6 +159,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 70.0),
+        child: FloatingActionButton(
+          onPressed: _listen,
+          child: Icon(_isListening ? Icons.mic : Icons.mic_none),
+        ),
+      ),
     );
   }
 
@@ -132,6 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _loading = false;
           _scrollDown();
         });
+        _speak(text); // Speak out the bot response
       }
     } catch (e) {
       _showError('Error: ${e.toString()}');
