@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:giminichatapp/message_widget.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'env.dart'; // Import the env file
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,18 +22,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _model = GenerativeModel(
-      model: 'gimini-pro',
-      apiKey: const String.fromEnvironment('api_key'),
-    );
-    _chatSession = _model.startChat();
+    _initializeModel();
+  }
+
+  void _initializeModel() {
+    try {
+      _model = GenerativeModel(
+        model: 'gemini-1.5-pro', // Replace with a valid model ID
+        apiKey: Env.apiKey, // Use the loaded API key
+        systemInstruction: Content.system('You are a storyteller. You love to generate short horror stories.'),
+      );
+      _chatSession = _model.startChat();
+    } catch (e) {
+      _showError(e.toString());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Build with Gimini'),
+        title: const Text('Build with Gemini'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
