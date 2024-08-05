@@ -1,3 +1,3 @@
 class Env {
-  static const String apiKey = 'AIzaSyDZd8YpFICJwYHGgtq0ej7NZzMCI56QWs0';
+  static const String apiKey = 'Hey get your own API key commone';
 }
